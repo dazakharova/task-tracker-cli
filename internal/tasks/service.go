@@ -29,8 +29,11 @@ func AddTask(file, description string) error {
 	tasks = append(tasks, newTask)
 
 	err = Save(file, tasks)
+	if err != nil {
+		return err
+	}
 	fmt.Printf("Task added successfully (ID: %d)\n", newTask.ID)
-	return err
+	return nil
 }
 
 func ListTasks(file string) error {
