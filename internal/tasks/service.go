@@ -50,14 +50,18 @@ func ListTasks(file string) error {
 		fmt.Println("No tasks found.")
 		return nil
 	}
+	
+	fmt.Printf("%-4s %-12s %-17s %s\n", "ID", "Status", "Created", "Description")
 
 	for _, task := range tasks {
-		fmt.Printf("#%d [%s] %s %s\n",
+		fmt.Printf(
+			"%-4d %-12s %-17s %s\n",
 			task.ID,
+			task.Status,
 			task.CreatedAt.Format("2006-01-02 15:04"),
 			task.Description,
-			task.Status,
 		)
 	}
+
 	return nil
 }
