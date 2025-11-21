@@ -1,9 +1,11 @@
 package tasks
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestLoad(t *testing.T) {
@@ -106,6 +108,52 @@ func TestLoad(t *testing.T) {
 
 		if len(tasks) != 0 {
 			t.Fatalf("Expected 0 tasks, got %d", len(tasks))
+		}
+	})
+}
+
+func TestSave(t *testing.T) {
+	t.Run("Valid tasks to empty file", func(t *testing.T) {
+		dir := t.TempDir()
+		filename := filepath.Join(dir, "tasks.json")
+
+		t1 := time.Date(2025, 01, 12, 15, 4, 5, 0, time.UTC)
+		tasks := []Task{
+			{ID: 1, Description: "Buy groceries", CreatedAt: t1},
+			{ID: 2, Description: "Cook dinner", CreatedAt: t1},
+		}
+
+		if err := Save(filename, tasks); err != nil {
+			t.Fatalf("Save returned error: %v", err)
+		}
+
+		data, err := os.ReadFile(filename)
+		if err != nil {
+			t.Fatalf("failed to read saved file: %v", err)
+		}
+
+		var saved []Task
+		if err := json.Unmarshal(data, &saved); err != nil {
+			t.Fatalf("failed to unmarshal saved JSON: %v", err)
+		}
+
+		// Validate content
+		if len(saved) != 2 {
+			t.Fatalf("expected 2 tasks, got %d", len(saved))
+		}
+
+		if saved[0].ID != 1 || saved[0].Description != "Buy groceries" {
+			t.Errorf("unexpected task[0]: %+v", saved[0])
+		}
+		if saved[1].ID != 2 || saved[1].Description != "Cook dinner" {
+			t.Errorf("unexpected task[1]: %+v", saved[1])
+		}
+
+		if !saved[0].CreatedAt.Equal(t1) {
+			t.Errorf("task[0].CreatedAt mismatch: got %v, want %v", saved[0].CreatedAt, t1)
+		}
+		if !saved[1].CreatedAt.Equal(t1) {
+			t.Errorf("task[1].CreatedAt mismatch: got %v, want %v", saved[1].CreatedAt, t1)
 		}
 	})
 }
