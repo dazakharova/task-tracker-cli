@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 )
 
@@ -10,6 +11,10 @@ func Load(file string) ([]Task, error) {
 
 	data, err := os.ReadFile(file)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return []Task{}, nil
+		}
+		
 		return nil, err
 	}
 
