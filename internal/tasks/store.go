@@ -24,3 +24,12 @@ func Load(file string) ([]Task, error) {
 
 	return tasks, nil
 }
+
+func Save(file string, tasks []Task) error {
+	data, err := json.Marshal(tasks)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(file, data, 0644)
+}
