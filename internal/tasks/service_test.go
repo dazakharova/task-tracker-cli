@@ -463,3 +463,72 @@ func TestMarkTaskDone(t *testing.T) {
 		}
 	})
 }
+
+func TestDeleteTask(t *testing.T) {
+	t.Run("Deletes existing task successfully", func(t *testing.T) {
+		initialTasks := []Task{
+			{
+				ID:          1,
+				Description: "First task",
+				Status:      "todo",
+				CreatedAt:   time.Now().Add(-2 * time.Hour),
+			},
+			{
+				ID:          2,
+				Description: "Second task",
+				Status:      "in progress",
+				CreatedAt:   time.Now().Add(-1 * time.Hour),
+			},
+		}
+
+		filename := createTempTasksFile(t, initialTasks)
+
+		err := DeleteTask(filename, 1)
+		if err != nil {
+			t.Fatalf("DeleteTask returned error: %v", err)
+		}
+
+		updatedTasks, err := Load(filename)
+		if err != nil {
+			t.Fatalf("Load returned error after DeleteTask: %v", err)
+		}
+
+		if len(updatedTasks) != 1 {
+			t.Fatalf("Expected 1 task after delete, got %d", len(updatedTasks))
+		}
+
+		if updatedTasks[0].ID != 2 {
+			t.Fatalf("Expected remaining task ID to be 2, got %d", updatedTasks[0].ID)
+		}
+	})
+
+	t.Run("Returns error when filename is empty", func(t *testing.T) {
+		err := DeleteTask("", 1)
+
+		if err == nil || err.Error() != "filename cannot be empty" {
+			t.Fatalf("Expected error %q, got %v", "filename cannot be empty", err)
+		}
+	})
+
+	t.Run("Returns error when task not found", func(t *testing.T) {
+		initialTasks := []Task{
+			{
+				ID:          1,
+				Description: "First task",
+				Status:      "todo",
+				CreatedAt:   time.Now(),
+			},
+		}
+
+		filename := createTempTasksFile(t, initialTasks)
+
+		err := DeleteTask(filename, 99)
+		if err == nil {
+			t.Fatal("Expected error when deleting non-existing task, got nil")
+		}
+
+		if !strings.Contains(err.Error(), "not found") {
+			t.Fatalf("Expected error to mention %q, got %q", "not found", err.Error())
+		}
+	})
+}
