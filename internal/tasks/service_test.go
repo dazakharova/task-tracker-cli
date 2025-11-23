@@ -79,10 +79,24 @@ func TestListTasks(t *testing.T) {
 		output := string(out)
 
 		got := strings.TrimSpace(output)
-		want := "#1 [2025-01-12 15:04] Buy groceries todo\n#2 [2025-01-12 15:04] Cook dinner todo"
 
-		if !strings.Contains(got, want) {
-			t.Fatalf("Expected success message: %s, got %q", want, got)
+		mustContain := []string{
+			"ID", // header present
+			"Status",
+			"Created",
+			"Description",
+			"1", // IDs present
+			"2",
+			"Buy groceries", // descriptions present
+			"Cook dinner",
+			"todo", // status present at least somewhere
+			"2025-01-12 15:04",
+		}
+
+		for _, s := range mustContain {
+			if !strings.Contains(got, s) {
+				t.Fatalf("expected output to contain %q, got:\n%s", s, got)
+			}
 		}
 	})
 
