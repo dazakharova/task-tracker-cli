@@ -112,3 +112,39 @@ func UpdateTask(file string, ID int, description string) error {
 
 	return fmt.Errorf("task with ID %d not found", ID)
 }
+
+func MarkTaskInProgress(file string, ID int) error {
+	return markTaskStatus(file, ID, "in progress")
+}
+
+func MarkTaskDone(file string, ID int) error {
+	return markTaskStatus(file, ID, "done")
+
+}
+
+func markTaskStatus(file string, ID int, status string) error {
+	if file == "" {
+		return errors.New("filename cannot be empty")
+	}
+
+	tasks, err := Load(file)
+	if err != nil {
+		return err
+	}
+
+	for i := range tasks {
+		if tasks[i].ID == ID {
+			tasks[i].Status = status
+
+			err = Save(file, tasks)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("Task updated successfully (ID: %d)\n", ID)
+			return nil
+		}
+	}
+
+	return fmt.Errorf("task with ID %d not found", ID)
+}

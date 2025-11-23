@@ -333,3 +333,133 @@ func captureOutput(t *testing.T, fn func()) string {
 	out, _ := io.ReadAll(r)
 	return string(out)
 }
+
+func TestMarkTaskInProgress(t *testing.T) {
+	t.Run("Marks existing task as in progress", func(t *testing.T) {
+		now := time.Now()
+
+		initialTasks := []Task{
+			{
+				ID:          1,
+				Description: "First task",
+				Status:      "todo",
+				CreatedAt:   now.Add(-1 * time.Hour),
+			},
+		}
+
+		filename := createTempTasksFile(t, initialTasks)
+
+		err := MarkTaskInProgress(filename, 1)
+		if err != nil {
+			t.Fatalf("MarkTaskInProgress returned error: %v", err)
+		}
+
+		updatedTasks, err := Load(filename)
+		if err != nil {
+			t.Fatalf("Load returned error after MarkTaskInProgress: %v", err)
+		}
+
+		if len(updatedTasks) != 1 {
+			t.Fatalf("Expected 1 task, got %d", len(updatedTasks))
+		}
+
+		if updatedTasks[0].Status != "in progress" {
+			t.Fatalf("Expected status %q, got %q", "in progress", updatedTasks[0].Status)
+		}
+	})
+
+	t.Run("Returns error when filename is empty", func(t *testing.T) {
+		err := MarkTaskInProgress("", 1)
+
+		if err == nil || err.Error() != "filename cannot be empty" {
+			t.Fatalf("Expected error %q, got %v", "filename cannot be empty", err)
+		}
+	})
+
+	t.Run("Returns error when task not found", func(t *testing.T) {
+		initialTasks := []Task{
+			{
+				ID:          1,
+				Description: "First task",
+				Status:      "todo",
+				CreatedAt:   time.Now(),
+			},
+		}
+
+		filename := createTempTasksFile(t, initialTasks)
+
+		err := MarkTaskInProgress(filename, 99)
+		if err == nil {
+			t.Fatal("Expected error when marking non-existing task in progress, got nil")
+		}
+
+		if !strings.Contains(err.Error(), "not found") {
+			t.Fatalf("Expected error to mention %q, got %q", "not found", err.Error())
+		}
+	})
+}
+
+func TestMarkTaskDone(t *testing.T) {
+	t.Run("Marks existing task as done", func(t *testing.T) {
+		now := time.Now()
+
+		initialTasks := []Task{
+			{
+				ID:          1,
+				Description: "First task",
+				Status:      "in progress",
+				CreatedAt:   now.Add(-1 * time.Hour),
+			},
+		}
+
+		filename := createTempTasksFile(t, initialTasks)
+
+		err := MarkTaskDone(filename, 1)
+		if err != nil {
+			t.Fatalf("MarkTaskDone returned error: %v", err)
+		}
+
+		updatedTasks, err := Load(filename)
+		if err != nil {
+			t.Fatalf("Load returned error after MarkTaskDone: %v", err)
+		}
+
+		if len(updatedTasks) != 1 {
+			t.Fatalf("Expected 1 task, got %d", len(updatedTasks))
+		}
+
+		if updatedTasks[0].Status != "done" {
+			t.Fatalf("Expected status %q, got %q", "done", updatedTasks[0].Status)
+		}
+	})
+
+	t.Run("Returns error when filename is empty", func(t *testing.T) {
+		err := MarkTaskDone("", 1)
+
+		if err == nil || err.Error() != "filename cannot be empty" {
+			t.Fatalf("Expected error %q, got %v", "filename cannot be empty", err)
+		}
+	})
+
+	t.Run("Returns error when task not found", func(t *testing.T) {
+		initialTasks := []Task{
+			{
+				ID:          1,
+				Description: "First task",
+				Status:      "todo",
+				CreatedAt:   time.Now(),
+			},
+		}
+
+		filename := createTempTasksFile(t, initialTasks)
+
+		err := MarkTaskDone(filename, 99)
+		if err == nil {
+			t.Fatal("Expected error when marking non-existing task done, got nil")
+		}
+
+		if !strings.Contains(err.Error(), "not found") {
+			t.Fatalf("Expected error to mention %q, got %q", "not found", err.Error())
+		}
+	})
+}
