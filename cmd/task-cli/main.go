@@ -15,6 +15,7 @@ func showHelp() {
 	fmt.Println("  task-cli update <id> <new description>")
 	fmt.Println("  task-cli mark-in-progress <id>")
 	fmt.Println("  task-cli mark-done <id>")
+	fmt.Println("  task-cli delete <id>")
 	fmt.Println()
 	fmt.Println("Status values for list:")
 	fmt.Println("  todo")
@@ -29,6 +30,7 @@ func showHelp() {
 	fmt.Println(`  task-cli update 1 "Buy groceries and cook dinner"`)
 	fmt.Println(`  task-cli mark-in-progress 3`)
 	fmt.Println(`  task-cli mark-done 1`)
+	fmt.Println(`  task-cli delete 2`)
 }
 
 func main() {
@@ -148,6 +150,26 @@ func main() {
 		err = tasks.MarkTaskDone(file, taskID)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error marking task 'done': %v\n", err)
+			os.Exit(1)
+		}
+	case "delete":
+		if len(args) < 2 {
+			fmt.Println("Error: missing task ID.")
+			fmt.Println()
+			showHelp()
+			os.Exit(1)
+		}
+
+		idStr := args[1]
+		taskID, err := strconv.Atoi(idStr)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: invalid task ID %q: %v\n", idStr, err)
+			os.Exit(1)
+		}
+
+		err = tasks.DeleteTask(file, taskID)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error deleting task: %v\n", err)
 			os.Exit(1)
 		}
 	default:
