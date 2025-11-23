@@ -64,20 +64,11 @@ func TestListTasks(t *testing.T) {
 			t.Fatalf("Failed to write temp file: %v", err)
 		}
 
-		old := os.Stdout
-		r, w, _ := os.Pipe()
-		os.Stdout = w
-
-		err := ListTasks(filename, "")
-		if err != nil {
-			t.Fatalf("ListTasks returned error: %v", err)
-		}
-
-		w.Close()
-		os.Stdout = old
-
-		out, _ := io.ReadAll(r)
-		output := string(out)
+		output := captureOutput(t, func() {
+			if err := ListTasks(filename, ""); err != nil {
+				t.Fatalf("ListTasks returned error: %v", err)
+			}
+		})
 
 		got := strings.TrimSpace(output)
 
@@ -109,20 +100,11 @@ func TestListTasks(t *testing.T) {
 			t.Fatalf("Failed to write temp file: %v", err)
 		}
 
-		old := os.Stdout
-		r, w, _ := os.Pipe()
-		os.Stdout = w
-
-		err := ListTasks(filename, "")
-		if err != nil {
-			t.Fatalf("ListTasks returned error: %v", err)
-		}
-
-		w.Close()
-		os.Stdout = old
-
-		out, _ := io.ReadAll(r)
-		output := string(out)
+		output := captureOutput(t, func() {
+			if err := ListTasks(filename, ""); err != nil {
+				t.Fatalf("ListTasks returned error: %v", err)
+			}
+		})
 
 		got := strings.TrimSpace(output)
 		want := "No tasks found."
@@ -168,20 +150,12 @@ func TestListTasks(t *testing.T) {
 			t.Fatalf("Failed to write temp file: %v", err)
 		}
 
-		old := os.Stdout
-		r, w, _ := os.Pipe()
-		os.Stdout = w
+		output := captureOutput(t, func() {
+			if err := ListTasks(filename, "done"); err != nil {
+				t.Fatalf("ListTasks returned error: %v", err)
+			}
+		})
 
-		err := ListTasks(filename, "done")
-		if err != nil {
-			t.Fatalf("ListTasks returned error: %v", err)
-		}
-
-		w.Close()
-		os.Stdout = old
-
-		out, _ := io.ReadAll(r)
-		output := string(out)
 		got := strings.TrimSpace(output)
 
 		if !strings.Contains(got, "Cook dinner") {
@@ -212,20 +186,12 @@ func TestListTasks(t *testing.T) {
 			t.Fatalf("Failed to write temp file: %v", err)
 		}
 
-		old := os.Stdout
-		r, w, _ := os.Pipe()
-		os.Stdout = w
+		output := captureOutput(t, func() {
+			if err := ListTasks(filename, "done"); err != nil {
+				t.Fatalf("ListTasks returned error: %v", err)
+			}
+		})
 
-		err := ListTasks(filename, "done")
-		if err != nil {
-			t.Fatalf("ListTasks returned error: %v", err)
-		}
-
-		w.Close()
-		os.Stdout = old
-
-		out, _ := io.ReadAll(r)
-		output := string(out)
 		got := strings.TrimSpace(output)
 
 		want := `No tasks with status "done" found.`
@@ -350,4 +316,20 @@ func TestUpdateTask(t *testing.T) {
 			t.Fatalf("Expected error %q, got %v", "filename cannot be empty", err)
 		}
 	})
+}
+
+func captureOutput(t *testing.T, fn func()) string {
+	t.Helper()
+
+	old := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	fn()
+
+	w.Close()
+	os.Stdout = old
+
+	out, _ := io.ReadAll(r)
+	return string(out)
 }
