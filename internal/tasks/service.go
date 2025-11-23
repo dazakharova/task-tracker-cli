@@ -148,3 +148,30 @@ func markTaskStatus(file string, ID int, status string) error {
 
 	return fmt.Errorf("task with ID %d not found", ID)
 }
+
+func DeleteTask(file string, ID int) error {
+	if file == "" {
+		return errors.New("filename cannot be empty")
+	}
+
+	tasks, err := Load(file)
+	if err != nil {
+		return err
+	}
+
+	for i := range tasks {
+		if tasks[i].ID == ID {
+			tasks = append(tasks[:i], tasks[i+1:]...)
+
+			err = Save(file, tasks)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("Task deleted successfully (ID: %d)\n", ID)
+			return nil
+		}
+	}
+
+	return fmt.Errorf("task with ID %d not found", ID)
+}
