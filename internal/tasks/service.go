@@ -36,7 +36,7 @@ func AddTask(file, description string) error {
 	return nil
 }
 
-func ListTasks(file string) error {
+func ListTasks(file string, status string) error {
 	if file == "" {
 		return errors.New("filename cannot be empty")
 	}
@@ -51,9 +51,24 @@ func ListTasks(file string) error {
 		return nil
 	}
 
+	filtered := tasks
+	if status != "" {
+		filtered = nil
+		for _, task := range tasks {
+			if task.Status == status {
+				filtered = append(filtered, task)
+			}
+		}
+
+		if len(filtered) == 0 {
+			fmt.Printf("No tasks with status %q found.\n", status)
+			return nil
+		}
+	}
+
 	fmt.Printf("%-4s %-12s %-17s %s\n", "ID", "Status", "Created", "Description")
 
-	for _, task := range tasks {
+	for _, task := range filtered {
 		fmt.Printf(
 			"%-4d %-12s %-17s %s\n",
 			task.ID,

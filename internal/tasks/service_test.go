@@ -41,7 +41,7 @@ func TestAddTask(t *testing.T) {
 }
 
 func TestListTasks(t *testing.T) {
-	t.Run("Prints tasks for non-empty file", func(t *testing.T) {
+	t.Run("Prints tasks for non-empty file (no status filter)", func(t *testing.T) {
 		dir := t.TempDir()
 		filename := filepath.Join(dir, "tasks.json")
 
@@ -68,7 +68,7 @@ func TestListTasks(t *testing.T) {
 		r, w, _ := os.Pipe()
 		os.Stdout = w
 
-		err := ListTasks(filename)
+		err := ListTasks(filename, "")
 		if err != nil {
 			t.Fatalf("ListTasks returned error: %v", err)
 		}
@@ -82,15 +82,15 @@ func TestListTasks(t *testing.T) {
 		got := strings.TrimSpace(output)
 
 		mustContain := []string{
-			"ID", // header present
+			"ID",
 			"Status",
 			"Created",
 			"Description",
-			"1", // IDs present
+			"1",
 			"2",
-			"Buy groceries", // descriptions present
+			"Buy groceries",
 			"Cook dinner",
-			"todo", // status present at least somewhere
+			"todo",
 			"2025-01-12 15:04",
 		}
 
@@ -113,7 +113,7 @@ func TestListTasks(t *testing.T) {
 		r, w, _ := os.Pipe()
 		os.Stdout = w
 
-		err := ListTasks(filename)
+		err := ListTasks(filename, "")
 		if err != nil {
 			t.Fatalf("ListTasks returned error: %v", err)
 		}
@@ -133,9 +133,105 @@ func TestListTasks(t *testing.T) {
 	})
 
 	t.Run("Returns error when filename is empty", func(t *testing.T) {
-		err := ListTasks("")
+		err := ListTasks("", "")
 		if err == nil || err.Error() != "filename cannot be empty" {
 			t.Fatalf("Expected error %q, got %v", "filename cannot be empty", err)
+		}
+	})
+
+	t.Run("Prints only tasks with given status", func(t *testing.T) {
+		dir := t.TempDir()
+		filename := filepath.Join(dir, "tasks.json")
+
+		jsonTasks := `[
+		  {
+			"id": 1,
+			"description": "Buy groceries",
+			"status": "todo",
+			"created_at": "2025-01-12T15:04:05Z"
+		  },
+		  {
+			"id": 2,
+			"description": "Cook dinner",
+			"status": "done",
+			"created_at": "2025-01-12T16:00:00Z"
+		  },
+		  {
+			"id": 3,
+			"description": "Clean kitchen",
+			"status": "todo",
+			"created_at": "2025-01-12T17:00:00Z"
+		  }
+		]`
+
+		if err := os.WriteFile(filename, []byte(jsonTasks), 0o644); err != nil {
+			t.Fatalf("Failed to write temp file: %v", err)
+		}
+
+		old := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		err := ListTasks(filename, "done")
+		if err != nil {
+			t.Fatalf("ListTasks returned error: %v", err)
+		}
+
+		w.Close()
+		os.Stdout = old
+
+		out, _ := io.ReadAll(r)
+		output := string(out)
+		got := strings.TrimSpace(output)
+
+		if !strings.Contains(got, "Cook dinner") {
+			t.Fatalf("expected output to contain %q, got:\n%s", "Cook dinner", got)
+		}
+		if strings.Contains(got, "Buy groceries") {
+			t.Fatalf("did not expect output to contain %q when filtering by status %q, got:\n%s", "Buy groceries", "done", got)
+		}
+		if strings.Contains(got, "Clean kitchen") {
+			t.Fatalf("did not expect output to contain %q when filtering by status %q, got:\n%s", "Clean kitchen", "done", got)
+		}
+	})
+
+	t.Run("Prints message when no tasks with given status found", func(t *testing.T) {
+		dir := t.TempDir()
+		filename := filepath.Join(dir, "tasks.json")
+
+		jsonTasks := `[
+		  {
+			"id": 1,
+			"description": "Buy groceries",
+			"status": "todo",
+			"created_at": "2025-01-12T15:04:05Z"
+		  }
+		]`
+
+		if err := os.WriteFile(filename, []byte(jsonTasks), 0o644); err != nil {
+			t.Fatalf("Failed to write temp file: %v", err)
+		}
+
+		old := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		err := ListTasks(filename, "done")
+		if err != nil {
+			t.Fatalf("ListTasks returned error: %v", err)
+		}
+
+		w.Close()
+		os.Stdout = old
+
+		out, _ := io.ReadAll(r)
+		output := string(out)
+		got := strings.TrimSpace(output)
+
+		want := `No tasks with status "done" found.`
+
+		if !strings.Contains(got, want) {
+			t.Fatalf("Expected message %q, got:\n%s", want, got)
 		}
 	})
 }

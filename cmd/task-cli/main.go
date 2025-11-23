@@ -11,12 +11,19 @@ import (
 func showHelp() {
 	fmt.Println("Usage:")
 	fmt.Println("  task-cli add <task description>")
-	fmt.Println("  task-cli list")
+	fmt.Println("  task-cli list [status]")
 	fmt.Println("  task-cli update <id> <new description>")
+	fmt.Println()
+	fmt.Println("Status values for list:")
+	fmt.Println("  todo")
+	fmt.Println("  in progress")
+	fmt.Println("  done")
 	fmt.Println()
 	fmt.Println("Examples:")
 	fmt.Println(`  task-cli add "Buy groceries"`)
 	fmt.Println(`  task-cli list`)
+	fmt.Println(`  task-cli list done`)
+	fmt.Println(`  task-cli list "in progress"`)
 	fmt.Println(`  task-cli update 1 "Buy groceries and cook dinner"`)
 }
 
@@ -52,7 +59,28 @@ func main() {
 			os.Exit(1)
 		}
 	case "list":
-		if err := tasks.ListTasks(file); err != nil {
+		var validStatuses = map[string]bool{
+			"todo":        true,
+			"in progress": true,
+			"done":        true,
+		}
+
+		var status string
+		if len(args) > 1 {
+			status = strings.Join(args[1:], " ")
+
+			if !validStatuses[status] {
+				fmt.Printf("Error: invalid status: %s.", status)
+				fmt.Println("Allowed statuses: todo, in progress, done.")
+				fmt.Println()
+				showHelp()
+				os.Exit(1)
+			}
+		} else {
+			status = ""
+		}
+
+		if err := tasks.ListTasks(file, status); err != nil {
 			fmt.Fprintf(os.Stderr, "Error listing tasks: %v\n", err)
 			os.Exit(1)
 		}
