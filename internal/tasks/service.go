@@ -50,7 +50,7 @@ func ListTasks(file string) error {
 		fmt.Println("No tasks found.")
 		return nil
 	}
-	
+
 	fmt.Printf("%-4s %-12s %-17s %s\n", "ID", "Status", "Created", "Description")
 
 	for _, task := range tasks {
@@ -64,4 +64,36 @@ func ListTasks(file string) error {
 	}
 
 	return nil
+}
+
+func UpdateTask(file string, ID int, description string) error {
+	if file == "" {
+		return errors.New("filename cannot be empty")
+	}
+
+	if description == "" {
+		return errors.New("task description is required")
+	}
+
+	tasks, err := Load(file)
+	if err != nil {
+		return err
+	}
+
+	for i := range tasks {
+		if tasks[i].ID == ID {
+			tasks[i].Description = description
+			tasks[i].UpdatedAt = time.Now()
+
+			err = Save(file, tasks)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("Task updated successfully (ID: %d)\n", ID)
+			return nil
+		}
+	}
+
+	return fmt.Errorf("task with ID %d not found", ID)
 }

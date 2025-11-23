@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestAddTask(t *testing.T) {
@@ -133,6 +134,122 @@ func TestListTasks(t *testing.T) {
 
 	t.Run("Returns error when filename is empty", func(t *testing.T) {
 		err := ListTasks("")
+		if err == nil || err.Error() != "filename cannot be empty" {
+			t.Fatalf("Expected error %q, got %v", "filename cannot be empty", err)
+		}
+	})
+}
+
+func createTempTasksFile(t *testing.T, tasks []Task) string {
+	t.Helper()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "tasks.json")
+
+	if err := Save(path, tasks); err != nil {
+		t.Fatalf("failed to save initial tasks: %v", err)
+	}
+
+	return path
+}
+
+func TestUpdateTask(t *testing.T) {
+	t.Run("Updates existing task successfully", func(t *testing.T) {
+		now := time.Now()
+
+		initialTasks := []Task{
+			{
+				ID:          1,
+				Description: "First task",
+				Status:      "todo",
+				CreatedAt:   now.Add(-2 * time.Hour),
+			},
+			{
+				ID:          2,
+				Description: "Second task",
+				Status:      "in progress",
+				CreatedAt:   now.Add(-1 * time.Hour),
+			},
+		}
+
+		filename := createTempTasksFile(t, initialTasks)
+
+		newDescription := "Updated second task description"
+
+		err := UpdateTask(filename, 2, newDescription)
+		if err != nil {
+			t.Fatalf("UpdateTask returned error: %v", err)
+		}
+
+		updatedTasks, err := Load(filename)
+		if err != nil {
+			t.Fatalf("Load returned error after update: %v", err)
+		}
+
+		if len(updatedTasks) != 2 {
+			t.Fatalf("Expected 2 tasks, got %d", len(updatedTasks))
+		}
+
+		var updated Task
+		for _, task := range updatedTasks {
+			if task.ID == 2 {
+				updated = task
+				break
+			}
+		}
+
+		if updated.ID == 0 {
+			t.Fatalf("Task with ID 2 not found after update")
+		}
+
+		if updated.Description != newDescription {
+			t.Errorf("Expected description %q, got %q", newDescription, updated.Description)
+		}
+
+		if updated.UpdatedAt.IsZero() {
+			t.Errorf("Expected UpdatedAt to be set, but it is zero")
+		}
+
+		for _, task := range updatedTasks {
+			if task.ID == 1 && task.Description != "First task" {
+				t.Errorf("Task with ID 1 should not be modified, got description %q", task.Description)
+			}
+		}
+	})
+
+	t.Run("Returns error when task not found", func(t *testing.T) {
+		initialTasks := []Task{
+			{
+				ID:          1,
+				Description: "First task",
+				Status:      "todo",
+				CreatedAt:   time.Now(),
+			},
+		}
+
+		filename := createTempTasksFile(t, initialTasks)
+
+		err := UpdateTask(filename, 99, "Does not matter")
+
+		if !strings.Contains(err.Error(), "not found") {
+			t.Fatalf("Expected error to mention %q, got %q", "not found", err.Error())
+		}
+	})
+
+	t.Run("Returns error when description is empty", func(t *testing.T) {
+		dir := t.TempDir()
+		filename := filepath.Join(dir, "tasks.json")
+
+		err := UpdateTask(filename, 1, "")
+
+		if err == nil || err.Error() != "task description is required" {
+			t.Fatalf("Expected error %q, got %v", "task description is required", err)
+		}
+	})
+
+	t.Run("Returns error when filename is empty", func(t *testing.T) {
+		err := UpdateTask("", 1, "Some description")
+
 		if err == nil || err.Error() != "filename cannot be empty" {
 			t.Fatalf("Expected error %q, got %v", "filename cannot be empty", err)
 		}
