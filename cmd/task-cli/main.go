@@ -41,6 +41,34 @@ func showHelp() {
 	fmt.Println(`  task-cli delete 2`)
 }
 
+func exitUsageError(message string) {
+	fmt.Fprintln(os.Stderr, message)
+	fmt.Fprintln(os.Stderr)
+	showHelp()
+	os.Exit(1)
+}
+
+func exitFatalError(message string, err error) {
+	fmt.Fprintf(os.Stderr, "%s: %v\n", message, err)
+	os.Exit(1)
+}
+
+func handleMarkStatus(status string, filename string, idStr string) error {
+	taskID, err := strconv.Atoi(idStr)
+	if err != nil {
+		return fmt.Errorf("invalid task ID %q: %w", idStr, err)
+	}
+
+	switch status {
+	case "in progress":
+		return tasks.MarkTaskInProgress(filename, taskID)
+	case "done":
+		return tasks.MarkTaskDone(filename, taskID)
+	default:
+		return fmt.Errorf("unsupported status %q", status)
+	}
+}
+
 func main() {
 	args := os.Args[1:]
 
@@ -139,33 +167,5 @@ func main() {
 		}
 	default:
 		exitUsageError("Invalid command: " + command)
-	}
-}
-
-func exitUsageError(message string) {
-	fmt.Fprintln(os.Stderr, message)
-	fmt.Fprintln(os.Stderr)
-	showHelp()
-	os.Exit(1)
-}
-
-func exitFatalError(message string, err error) {
-	fmt.Fprintf(os.Stderr, "%s: %v\n", message, err)
-	os.Exit(1)
-}
-
-func handleMarkStatus(status string, filename string, idStr string) error {
-	taskID, err := strconv.Atoi(idStr)
-	if err != nil {
-		return fmt.Errorf("invalid task ID %q: %w", idStr, err)
-	}
-
-	switch status {
-	case "in progress":
-		return tasks.MarkTaskInProgress(filename, taskID)
-	case "done":
-		return tasks.MarkTaskDone(filename, taskID)
-	default:
-		return fmt.Errorf("unsupported status %q", status)
 	}
 }
