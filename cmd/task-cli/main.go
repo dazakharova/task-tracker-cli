@@ -52,10 +52,7 @@ func main() {
 	switch command {
 	case "add":
 		if len(args) < 2 {
-			fmt.Println("Error: missing task description.")
-			fmt.Println()
-			showHelp()
-			os.Exit(1)
+			exitWithError("Error: missing task description.")
 		}
 
 		taskText := strings.Join(args[1:], " ")
@@ -76,11 +73,7 @@ func main() {
 			status = strings.Join(args[1:], " ")
 
 			if !validStatuses[status] {
-				fmt.Printf("Error: invalid status: %s.", status)
-				fmt.Println("Allowed statuses: todo, in progress, done.")
-				fmt.Println()
-				showHelp()
-				os.Exit(1)
+				exitWithError("Error: invalid task status.\nAllowed statuses: todo, in progress, done.")
 			}
 		} else {
 			status = ""
@@ -92,15 +85,9 @@ func main() {
 		}
 	case "update":
 		if len(args) < 2 {
-			fmt.Println("Error: missing task ID and description.")
-			fmt.Println()
-			showHelp()
-			os.Exit(1)
+			exitWithError("Error: missing task ID and description.")
 		} else if len(args) < 3 {
-			fmt.Println("Error: missing task description.")
-			fmt.Println()
-			showHelp()
-			os.Exit(1)
+			exitWithError("Error: missing task description.")
 		}
 
 		idStr := args[1]
@@ -118,10 +105,7 @@ func main() {
 		}
 	case "mark-in-progress":
 		if len(args) < 2 {
-			fmt.Println("Error: missing task ID.")
-			fmt.Println()
-			showHelp()
-			os.Exit(1)
+			exitWithError("Error: missing task ID.")
 		}
 
 		idStr := args[1]
@@ -138,10 +122,7 @@ func main() {
 		}
 	case "mark-done":
 		if len(args) < 2 {
-			fmt.Println("Error: missing task ID.")
-			fmt.Println()
-			showHelp()
-			os.Exit(1)
+			exitWithError("Error: missing task ID.")
 		}
 
 		idStr := args[1]
@@ -154,10 +135,7 @@ func main() {
 		}
 	case "delete":
 		if len(args) < 2 {
-			fmt.Println("Error: missing task ID.")
-			fmt.Println()
-			showHelp()
-			os.Exit(1)
+			exitWithError("Error: missing task ID.")
 		}
 
 		idStr := args[1]
@@ -173,8 +151,13 @@ func main() {
 			os.Exit(1)
 		}
 	default:
-		fmt.Printf("Invalid command: %s\n\n", command)
-		showHelp()
-		os.Exit(1)
+		exitWithError("Invalid command: " + command)
 	}
+}
+
+func exitWithError(message string) {
+	fmt.Fprintln(os.Stderr, message)
+	fmt.Fprintln(os.Stderr)
+	showHelp()
+	os.Exit(1)
 }
