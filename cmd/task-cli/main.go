@@ -8,6 +8,12 @@ import (
 	"strings"
 )
 
+var validStatuses = map[string]bool{
+	"todo":        true,
+	"in progress": true,
+	"done":        true,
+}
+
 func showHelp() {
 	fmt.Println("Usage:")
 	fmt.Println("  task-cli add <task description>")
@@ -61,12 +67,6 @@ func main() {
 			exitFatalError("Error adding task", err)
 		}
 	case "list":
-		var validStatuses = map[string]bool{
-			"todo":        true,
-			"in progress": true,
-			"done":        true,
-		}
-
 		var status string
 		if len(args) > 1 {
 			status = strings.Join(args[1:], " ")
