@@ -105,14 +105,10 @@ func main() {
 		}
 
 		idStr := args[1]
-		taskID, err := strconv.Atoi(idStr)
-		if err != nil {
-			exitFatalError("Error: invalid task ID: %v\n", err)
-		}
 
-		err = tasks.MarkTaskInProgress(file, taskID)
+		err := handleMarkStatus("in progress", file, idStr)
 		if err != nil {
-			exitFatalError("Error marking task 'in progress': %v\n", err)
+			exitFatalError("Error marking task 'in progress'", err)
 		}
 	case "mark-done":
 		if len(args) < 2 {
@@ -120,14 +116,10 @@ func main() {
 		}
 
 		idStr := args[1]
-		taskID, err := strconv.Atoi(idStr)
-		if err != nil {
-			exitFatalError("Error: invalid task ID: %v\n", err)
-		}
 
-		err = tasks.MarkTaskDone(file, taskID)
+		err := handleMarkStatus("done", file, idStr)
 		if err != nil {
-			exitFatalError("Error marking task 'done': %v\n", err)
+			exitFatalError("Error marking task 'done'", err)
 		}
 	case "delete":
 		if len(args) < 2 {
@@ -159,4 +151,20 @@ func exitUsageError(message string) {
 func exitFatalError(message string, err error) {
 	fmt.Fprintf(os.Stderr, "%s: %v\n", message, err)
 	os.Exit(1)
+}
+
+func handleMarkStatus(status string, filename string, idStr string) error {
+	taskID, err := strconv.Atoi(idStr)
+	if err != nil {
+		return fmt.Errorf("invalid task ID %q: %w", idStr, err)
+	}
+
+	switch status {
+	case "in progress":
+		return tasks.MarkTaskInProgress(filename, taskID)
+	case "done":
+		return tasks.MarkTaskDone(filename, taskID)
+	default:
+		return fmt.Errorf("unsupported status %q", status)
+	}
 }
