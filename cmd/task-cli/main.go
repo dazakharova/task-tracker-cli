@@ -14,6 +14,8 @@ var validStatuses = map[string]bool{
 	"done":        true,
 }
 
+const tasksFile = "tasks.json"
+
 func showHelp() {
 	fmt.Println("Usage:")
 	fmt.Println("  task-cli add <task description>")
@@ -40,7 +42,6 @@ func showHelp() {
 }
 
 func main() {
-	file := "tasks.json"
 	args := os.Args[1:]
 
 	if len(args) == 0 {
@@ -63,7 +64,7 @@ func main() {
 
 		taskText := strings.Join(args[1:], " ")
 
-		if err := tasks.AddTask(file, taskText); err != nil {
+		if err := tasks.AddTask(tasksFile, taskText); err != nil {
 			exitFatalError("Error adding task", err)
 		}
 	case "list":
@@ -78,7 +79,7 @@ func main() {
 			status = ""
 		}
 
-		if err := tasks.ListTasks(file, status); err != nil {
+		if err := tasks.ListTasks(tasksFile, status); err != nil {
 			exitFatalError("Error listing tasks", err)
 		}
 	case "update":
@@ -96,7 +97,7 @@ func main() {
 
 		newDescription := strings.Join(args[2:], " ")
 
-		if err := tasks.UpdateTask(file, taskID, newDescription); err != nil {
+		if err := tasks.UpdateTask(tasksFile, taskID, newDescription); err != nil {
 			exitFatalError("Error updating task", err)
 		}
 	case "mark-in-progress":
@@ -106,7 +107,7 @@ func main() {
 
 		idStr := args[1]
 
-		err := handleMarkStatus("in progress", file, idStr)
+		err := handleMarkStatus("in progress", tasksFile, idStr)
 		if err != nil {
 			exitFatalError("Error marking task 'in progress'", err)
 		}
@@ -117,7 +118,7 @@ func main() {
 
 		idStr := args[1]
 
-		err := handleMarkStatus("done", file, idStr)
+		err := handleMarkStatus("done", tasksFile, idStr)
 		if err != nil {
 			exitFatalError("Error marking task 'done'", err)
 		}
@@ -132,7 +133,7 @@ func main() {
 			exitFatalError("Error: invalid task ID", err)
 		}
 
-		err = tasks.DeleteTask(file, taskID)
+		err = tasks.DeleteTask(tasksFile, taskID)
 		if err != nil {
 			exitFatalError("Error deleting task", err)
 		}
