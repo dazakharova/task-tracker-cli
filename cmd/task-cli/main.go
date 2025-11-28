@@ -58,7 +58,7 @@ func main() {
 		taskText := strings.Join(args[1:], " ")
 
 		if err := tasks.AddTask(file, taskText); err != nil {
-			exitFatalError("Error adding task: %v\n", err)
+			exitFatalError("Error adding task", err)
 		}
 	case "list":
 		var validStatuses = map[string]bool{
@@ -79,7 +79,7 @@ func main() {
 		}
 
 		if err := tasks.ListTasks(file, status); err != nil {
-			exitFatalError("Error listing tasks: %v\n", err)
+			exitFatalError("Error listing tasks", err)
 		}
 	case "update":
 		if len(args) < 2 {
@@ -91,13 +91,13 @@ func main() {
 		idStr := args[1]
 		taskID, err := strconv.Atoi(idStr)
 		if err != nil {
-			exitFatalError("Error: invalid task ID: %v\n", err)
+			exitFatalError("Error: invalid task ID", err)
 		}
 
 		newDescription := strings.Join(args[2:], " ")
 
 		if err := tasks.UpdateTask(file, taskID, newDescription); err != nil {
-			exitFatalError("Error updating task: %v\n", err)
+			exitFatalError("Error updating task", err)
 		}
 	case "mark-in-progress":
 		if len(args) < 2 {
@@ -129,12 +129,12 @@ func main() {
 		idStr := args[1]
 		taskID, err := strconv.Atoi(idStr)
 		if err != nil {
-			exitFatalError("Error: invalid task ID: %v\n", err)
+			exitFatalError("Error: invalid task ID", err)
 		}
 
 		err = tasks.DeleteTask(file, taskID)
 		if err != nil {
-			exitFatalError("Error deleting task: %v\n", err)
+			exitFatalError("Error deleting task", err)
 		}
 	default:
 		exitUsageError("Invalid command: " + command)
