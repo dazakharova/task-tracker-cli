@@ -52,14 +52,13 @@ func main() {
 	switch command {
 	case "add":
 		if len(args) < 2 {
-			exitWithError("Error: missing task description.")
+			exitUsageError("Error: missing task description.")
 		}
 
 		taskText := strings.Join(args[1:], " ")
 
 		if err := tasks.AddTask(file, taskText); err != nil {
-			fmt.Fprintf(os.Stderr, "Error adding task: %v\n", err)
-			os.Exit(1)
+			exitFatalError("Error adding task: %v\n", err)
 		}
 	case "list":
 		var validStatuses = map[string]bool{
@@ -73,91 +72,91 @@ func main() {
 			status = strings.Join(args[1:], " ")
 
 			if !validStatuses[status] {
-				exitWithError("Error: invalid task status.\nAllowed statuses: todo, in progress, done.")
+				exitUsageError("Error: invalid task status.\nAllowed statuses: todo, in progress, done.")
 			}
 		} else {
 			status = ""
 		}
 
 		if err := tasks.ListTasks(file, status); err != nil {
-			fmt.Fprintf(os.Stderr, "Error listing tasks: %v\n", err)
-			os.Exit(1)
+			exitFatalError("Error listing tasks: %v\n", err)
 		}
 	case "update":
 		if len(args) < 2 {
-			exitWithError("Error: missing task ID and description.")
+			exitUsageError("Error: missing task ID and description.")
 		} else if len(args) < 3 {
-			exitWithError("Error: missing task description.")
+			exitUsageError("Error: missing task description.")
 		}
 
 		idStr := args[1]
 		taskID, err := strconv.Atoi(idStr)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: invalid task ID %q: %v\n", idStr, err)
-			os.Exit(1)
+			exitFatalError("Error: invalid task ID: %v\n", err)
 		}
 
 		newDescription := strings.Join(args[2:], " ")
 
 		if err := tasks.UpdateTask(file, taskID, newDescription); err != nil {
-			fmt.Fprintf(os.Stderr, "Error updating task: %v\n", err)
-			os.Exit(1)
+			exitFatalError("Error updating task: %v\n", err)
 		}
 	case "mark-in-progress":
 		if len(args) < 2 {
-			exitWithError("Error: missing task ID.")
+			exitUsageError("Error: missing task ID.")
 		}
 
 		idStr := args[1]
 		taskID, err := strconv.Atoi(idStr)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: invalid task ID %q: %v\n", idStr, err)
-			os.Exit(1)
+			exitFatalError("Error: invalid task ID: %v\n", err)
 		}
 
 		err = tasks.MarkTaskInProgress(file, taskID)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error marking task 'in progress': %v\n", err)
-			os.Exit(1)
+			exitFatalError("Error marking task 'in progress': %v\n", err)
 		}
 	case "mark-done":
 		if len(args) < 2 {
-			exitWithError("Error: missing task ID.")
+			exitUsageError("Error: missing task ID.")
 		}
 
 		idStr := args[1]
 		taskID, err := strconv.Atoi(idStr)
+		if err != nil {
+			exitFatalError("Error: invalid task ID: %v\n", err)
+		}
 
 		err = tasks.MarkTaskDone(file, taskID)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error marking task 'done': %v\n", err)
-			os.Exit(1)
+			exitFatalError("Error marking task 'done': %v\n", err)
 		}
 	case "delete":
 		if len(args) < 2 {
-			exitWithError("Error: missing task ID.")
+			exitUsageError("Error: missing task ID.")
 		}
 
 		idStr := args[1]
 		taskID, err := strconv.Atoi(idStr)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: invalid task ID %q: %v\n", idStr, err)
-			os.Exit(1)
+			exitFatalError("Error: invalid task ID: %v\n", err)
 		}
 
 		err = tasks.DeleteTask(file, taskID)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error deleting task: %v\n", err)
-			os.Exit(1)
+			exitFatalError("Error deleting task: %v\n", err)
 		}
 	default:
-		exitWithError("Invalid command: " + command)
+		exitUsageError("Invalid command: " + command)
 	}
 }
 
-func exitWithError(message string) {
+func exitUsageError(message string) {
 	fmt.Fprintln(os.Stderr, message)
 	fmt.Fprintln(os.Stderr)
 	showHelp()
+	os.Exit(1)
+}
+
+func exitFatalError(message string, err error) {
+	fmt.Fprintf(os.Stderr, "%s: %v\n", message, err)
 	os.Exit(1)
 }
